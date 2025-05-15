@@ -40,15 +40,14 @@ def suggest(name, df, sim, n=5):
     for i in sorted_scores:
         t = df.loc[i[0], 'title']
         a = df.loc[i[0], 'authors']
-        print(f"- {t} by {a} ({round(i[1], 2)})")
+        print(f"- {t} by {a}")
 
 def main():
-    print("==Book Recommender==")
-    name = input("Enter the book name: ").strip()
+    print("Book Recommender")
+    name = input("Enter book name: ").strip()
     df = load_data()
     sim = make_matrix(df)
     suggest(name, df, sim)
 
 if __name__ == '__main__':
     main()
-
