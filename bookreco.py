@@ -44,7 +44,7 @@ def suggest(name, df, sim, n=5):
 
 def main():
     print("==Book Recommender==")
-    name = input("Enter book name: ").strip()
+    name = input("Enter the book name: ").strip()
     df = load_data()
     sim = make_matrix(df)
     suggest(name, df, sim)
