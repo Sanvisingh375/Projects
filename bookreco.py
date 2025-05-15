@@ -1,52 +1,54 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import difflib
 
-def loadbook(filepath='books.csv'):
+def load_data(file='books.csv'):
     try:
-        data = pd.read_csv(filepath)
+        df = pd.read_csv(file, on_bad_lines='skip')
     except Exception as e:
-        print(f"Failed to read the data file: {e}")
+        print("Error:", e)
         exit()
-    data['title'] = data['title'].fillna('')
-    data['authors'] = data['authors'].fillna('')
-    return data
+    df['title'] = df['title'].fillna('')
+    df['authors'] = df['authors'].fillna('')
+    return df
 
-def buildmatrix(data):
-    data['features'] = data.apply(lambda row: f"{row['title']} {row['authors']}", axis=1)
-    vect = TfidfVectorizer(stop_words='english')
-    tfidf= vect.fit_transform(data['features'])
-    sim_matrix = cosine_similarity(tfidf)
-    return sim_matrix
+def make_matrix(df):
+    feats = []
+    for i in range(len(df)):
+        feats.append(df.loc[i, 'title'] + " " + df.loc[i, 'authors'])
+    vec = TfidfVectorizer(stop_words='english')
+    mat = vec.fit_transform(feats)
+    sim = cosine_similarity(mat)
+    return sim
 
-def find_index(title, data):
-    match = data[data['title'].str.lower() == title.lower()]
-    return match.index[0] if not match.empty else None
+def get_index(name, df):
+    titles = df['title'].tolist()
+    match = difflib.get_close_matches(name, titles, n=1, cutoff=0.5)
+    if match:
+        return df[df['title'] == match[0]].index[0]
+    return None
 
-def reco_books(title, data, sim_matrix, top_n=5):
-    index = find_index(title, data)
-    if index is None:
-        print(f"\nThe book with title '{title}' was not found in the dataset.")
+def suggest(name, df, sim, n=5):
+    idx = get_index(name, df)
+    if idx is None:
+        print("Book not found.")
         return
-
-    sim_score = list(enumerate(sim_matrix[index]))
-    sort_scores = sorted(sim_score, key=lambda x: x[1], reverse=True)[1:top_n+1]
-
-    print(f"\nBooks similar to '{title}':\n")
-    for i, score in sort_scores:
-        sim_title = data.iloc[i]['title']
-        author = data.iloc[i]['authors']
-        print(f"- {sim_title} by {author} (Similarity: {round(score, 2)})")
+    scores = list(enumerate(sim[idx]))
+    sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)[1:n+1]
+    print("\nSimilar books to:", name)
+    for i in sorted_scores:
+        t = df.loc[i[0], 'title']
+        a = df.loc[i[0], 'authors']
+        print(f"- {t} by {a} ({round(i[1], 2)})")
 
 def main():
-    print("==Book Recommendation System==")
-    title_inp = input("Enter a book title:\n> ").strip()
+    print("Book Recommender")
+    name = input("Enter book name: ").strip()
+    df = load_data()
+    sim = make_matrix(df)
+    suggest(name, df, sim)
 
-    data = loadbook()
-    sim_matrix = buildmatrix(data)
-    data.reset_index(inplace=True)  
-    reco_books(title_inp, data, sim_matrix)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
