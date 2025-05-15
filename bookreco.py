@@ -43,7 +43,7 @@ def suggest(name, df, sim, n=5):
         print(f"- {t} by {a} ({round(i[1], 2)})")
 
 def main():
-    print("Book Recommender")
+    print("==Book Recommender==")
     name = input("Enter book name: ").strip()
     df = load_data()
     sim = make_matrix(df)
